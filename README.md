@@ -1,3 +1,5 @@
+2023: I don't have access to my old account, so I folked this copy to make some modifications for my tokenizer. Also renamed to pansearch.
+
 ##BinSearch
 
 BinSearch is a super-efficient, in-memory key/value data structure for Go. In future it could also expand to be disk-based easily enough.
