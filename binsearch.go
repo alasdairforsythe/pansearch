@@ -5820,6 +5820,253 @@ func (t *CounterBytes) Build() {
 	
 }
 
+func (t *CounterBytes) Build_With_Min(min int) {
+
+	var l, run, n, total, on int
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit8[run]); l > 0 {
+			var temp sortLimitVal8.Slice = t.limit8[run]
+			sortLimitVal8.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][1])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] {
+					n += int(k[1])
+				} else {
+					if on >= min {
+						this[1] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[1])
+				}
+			}
+			if on >= min {
+				this[1] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit8[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit16[run]); l > 0 {
+			var temp sortLimitVal16.Slice = t.limit16[run]
+			sortLimitVal16.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][2])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] {
+					n += int(k[2])
+				} else {
+					if on >= min {
+						this[2] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[2])
+				}
+			}
+			if on >= min {
+				this[2] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit16[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit24[run]); l > 0 {
+			var temp sortLimitVal24.Slice = t.limit24[run]
+			sortLimitVal24.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][3])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] {
+					n += int(k[3])
+				} else {
+						if on >= min {
+						this[3] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[3])
+				}
+			}
+			if on >= min {
+				this[3] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit24[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit32[run]); l > 0 {
+			var temp sortLimitVal32.Slice = t.limit32[run]
+			sortLimitVal32.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][4])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] {
+					n += int(k[4])
+				} else {
+					if on >= min {
+						this[4] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[4])
+				}
+			}
+			if on >= min {
+				this[4] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit32[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit40[run]); l > 0 {
+			var temp sortLimitVal40.Slice = t.limit40[run]
+			sortLimitVal40.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][5])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] {
+					n += int(k[5])
+				} else {
+					if on >= min {
+						this[5] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[5])
+				}
+			}
+			if on >= min {
+				this[5] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit40[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit48[run]); l > 0 {
+			var temp sortLimitVal48.Slice = t.limit48[run]
+			sortLimitVal48.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][6])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] && k[5] == this[5] {
+					n += int(k[6])
+				} else {
+					if on >= min {
+						this[6] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[6])
+				}
+			}
+			if on >= min {
+				this[6] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit48[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit56[run]); l > 0 {
+			var temp sortLimitVal56.Slice = t.limit56[run]
+			sortLimitVal56.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][7])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] && k[5] == this[5] && k[6] == this[6] {
+					n += int(k[7])
+				} else {
+					if on >= min {
+						this[7] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[7])
+				}
+			}
+			if on >= min {
+				this[7] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit56[run] = temp[0:on]
+			total += on
+		}
+	}
+	
+	for run=0; run<8; run++ {
+		if l = len(t.limit64[run]); l > 0 {
+			var temp sortLimitVal64.Slice = t.limit64[run]
+			sortLimitVal64.Asc(temp)
+			this := temp[0]
+			n = int(temp[0][8])
+			on = 0
+			for _, k := range temp[1:] {
+				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] && k[5] == this[5] && k[6] == this[6] && k[7] == this[7] {
+					n += int(k[8])
+				} else {
+					if on >= min {
+						this[8] = uint64(n)
+						temp[on] = this
+						on++
+					}
+					this = k
+					n = int(k[8])
+				}
+			}
+			if on >= min {
+				this[8] = uint64(n)
+				temp[on] = this
+				on++
+			}
+			t.limit64[run] = temp[0:on]
+			total += on
+		}
+	}
+	t.total = total
+	
+}
+
 func (t *CounterBytes) Optimize() {
 
 	var l, run int
