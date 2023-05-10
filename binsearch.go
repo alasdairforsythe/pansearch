@@ -5835,7 +5835,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] {
 					n += int(k[1])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[1] = uint64(n)
 						temp[on] = this
 						on++
@@ -5844,7 +5844,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[1])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[1] = uint64(n)
 				temp[on] = this
 				on++
@@ -5865,7 +5865,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] {
 					n += int(k[2])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[2] = uint64(n)
 						temp[on] = this
 						on++
@@ -5874,7 +5874,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[2])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[2] = uint64(n)
 				temp[on] = this
 				on++
@@ -5895,7 +5895,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] {
 					n += int(k[3])
 				} else {
-						if on >= min {
+						if n >= min {
 						this[3] = uint64(n)
 						temp[on] = this
 						on++
@@ -5904,7 +5904,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[3])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[3] = uint64(n)
 				temp[on] = this
 				on++
@@ -5925,7 +5925,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] {
 					n += int(k[4])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[4] = uint64(n)
 						temp[on] = this
 						on++
@@ -5934,7 +5934,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[4])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[4] = uint64(n)
 				temp[on] = this
 				on++
@@ -5955,7 +5955,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] {
 					n += int(k[5])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[5] = uint64(n)
 						temp[on] = this
 						on++
@@ -5964,7 +5964,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[5])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[5] = uint64(n)
 				temp[on] = this
 				on++
@@ -5985,7 +5985,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] && k[5] == this[5] {
 					n += int(k[6])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[6] = uint64(n)
 						temp[on] = this
 						on++
@@ -5994,7 +5994,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[6])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[6] = uint64(n)
 				temp[on] = this
 				on++
@@ -6015,7 +6015,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] && k[5] == this[5] && k[6] == this[6] {
 					n += int(k[7])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[7] = uint64(n)
 						temp[on] = this
 						on++
@@ -6024,7 +6024,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[7])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[7] = uint64(n)
 				temp[on] = this
 				on++
@@ -6045,7 +6045,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 				if k[0] == this[0] && k[1] == this[1] && k[2] == this[2] && k[3] == this[3] && k[4] == this[4] && k[5] == this[5] && k[6] == this[6] && k[7] == this[7] {
 					n += int(k[8])
 				} else {
-					if on >= min {
+					if n >= min {
 						this[8] = uint64(n)
 						temp[on] = this
 						on++
@@ -6054,7 +6054,7 @@ func (t *CounterBytes) Build_With_Min(min int) {
 					n = int(k[8])
 				}
 			}
-			if on >= min {
+			if n >= min {
 				this[8] = uint64(n)
 				temp[on] = this
 				on++
