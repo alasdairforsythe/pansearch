@@ -1,4 +1,4 @@
-package binsearch
+package pansearch
 
 import (
 // Customized sorting algorithms for KeyBytes
