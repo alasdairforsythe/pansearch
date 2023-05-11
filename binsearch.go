@@ -2082,6 +2082,51 @@ func (t *KeyBytes) Next() ([]byte, bool) {
 	}
 }
 
+func (t *KeyBytes) LongestLength() int { // the length of the longest key
+	var run int
+	for run=7; run>=0; run-- {
+		if len(t.limit64[run]) > 0 {
+			return 57 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit56[run]) > 0 {
+			return 49 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit48[run]) > 0 {
+			return 41 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit40[run]) > 0 {
+			return 33 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit32[run]) > 0 {
+			return 25 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit24[run]) > 0 {
+			return 17 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit16[run]) > 0 {
+			return 9 + run
+		}
+	}
+	for run=7; run>=0; run-- {
+		if len(t.limit8[run]) > 0 {
+			return 1 + run
+		}
+	}
+	return 0
+}
+
 func (t *KeyBytes) Keys() [][]byte {
 
 	var on, run int
