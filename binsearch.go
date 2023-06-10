@@ -137,6 +137,1310 @@ import (
 
 // ====================== bytes ======================
 
+// ---------- KeyBytesFast ----------
+// Key bytes fast uses a combination of hash map and binary search, which is even more effective in cases with lots of misses
+// 33.5 MB is the hash table size, it's stored bit-packed
+
+// Add this to any struct to make it binary searchable.
+type KeyBytesFast struct {
+	limit8 [8][]uint64 // where len(word) <= 8
+	limit16 [8][][2]uint64
+	limit24 [8][][3]uint64
+	limit32 [8][][4]uint64
+	limit40 [8][][5]uint64
+	limit48 [8][][6]uint64
+	limit56 [8][][7]uint64
+	limit64 [8][][8]uint64
+   // The order vars are used only when using AddSorted & Build. Build clears them. They are used for remembering the order that the keys were added in so the remap can be returned to the user by Build.
+	order8 [8][]int
+	order16 [8][]int
+	order24 [8][]int
+	order32 [8][]int
+	order40 [8][]int
+	order48 [8][]int
+	order56 [8][]int
+	order64 [8][]int
+	count [64]int // Used to convert limit maps to the 1D array value indicating where the value exists
+	total int
+   // Hashtable
+	hashmap [33554432]byte // 33.5MB = 28 bits
+   // Used for iterating through all of it
+	onlimit int
+	on8 int
+	oncursor int
+   }
+   
+   func (t *KeyBytesFast) Len() int {
+	   return t.total
+   }
+   
+   // Find returns the index based on the key.
+   func (t *KeyBytesFast) Find(thekey []byte) (int, bool) {
+	   
+	   var at, min int
+	   var compare uint64
+	   var hash uint64 = 14695981039346656037
+   
+	   switch (len(thekey) - 1) / 8 {
+	   
+		   case 0: // 0 - 8 bytes
+			   a, l := bytes2uint64(thekey)
+			   hash = ((hash ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit8[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l], true // found
+			   }
+			   return min + t.count[l], false // doesn't exist
+			   
+		   case 1: // 9 - 16 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, l := bytes2uint64(thekey[8:])
+			   hash = (((hash ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit16[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 8], true // found
+			   }
+			   return min + t.count[l + 8], false // doesn't exist
+			   
+		   case 2: // 17 - 24 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, l := bytes2uint64(thekey[16:])
+			   hash = ((((hash ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit24[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][2]; c < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if c > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 16], true // found
+			   }
+			   return min + t.count[l + 16], false // doesn't exist
+			   
+		   case 3: // 25 - 32 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, l := bytes2uint64(thekey[24:])
+			   hash = (((((hash ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit32[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][2]; c < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if c > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][3]; d < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if d > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 24], true // found
+			   }
+			   return min + t.count[l + 24], false // doesn't exist
+			   
+		   case 4: // 33 - 40 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, l := bytes2uint64(thekey[32:])
+			   hash = ((((((hash ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit40[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][2]; c < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if c > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][3]; d < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if d > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][4]; e < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if e > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 32], true // found
+			   }
+			   return min + t.count[l + 32], false // doesn't exist
+			   
+		   case 5: // 41 - 48 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, _ := bytes2uint64(thekey[32:])
+			   f, l := bytes2uint64(thekey[40:])
+			   hash = (((((((hash ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit48[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][2]; c < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if c > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][3]; d < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if d > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][4]; e < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if e > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][5]; f < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if f > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 40], true // found
+			   }
+			   return min + t.count[l + 40], false // doesn't exist
+			   
+		   case 6: // 49 - 56 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, _ := bytes2uint64(thekey[32:])
+			   f, _ := bytes2uint64(thekey[40:])
+			   g, l := bytes2uint64(thekey[48:])
+			   hash = ((((((((hash ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit56[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][2]; c < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if c > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][3]; d < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if d > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][4]; e < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if e > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][5]; f < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if f > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][6]; g < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if g > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 48], true // found
+			   }
+			   return min + t.count[l + 48], false // doesn't exist
+			   
+		   case 7: // 57 - 64 bytes
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, _ := bytes2uint64(thekey[32:])
+			   f, _ := bytes2uint64(thekey[40:])
+			   g, _ := bytes2uint64(thekey[48:])
+			   h, l := bytes2uint64(thekey[56:])
+			   hash = (((((((((hash ^ h) * 1099511628211 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
+				   return 0, false
+			   }
+			   cur := t.limit64[l]
+			   max := len(cur) - 1
+			   for min <= max {
+				   at = min + ((max - min) / 2)
+				   if compare = cur[at][0]; a < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if a > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][1]; b < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if b > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][2]; c < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if c > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][3]; d < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if d > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][4]; e < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if e > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][5]; f < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if f > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][6]; g < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if g > compare {
+					   min = at + 1
+					   continue
+				   }
+				   if compare = cur[at][7]; h < compare {
+					   max = at - 1
+					   continue
+				   }
+				   if h > compare {
+					   min = at + 1
+					   continue
+				   }
+				   return at + t.count[l + 56], true // found
+			   }
+			   return min + t.count[l + 56], false // doesn't exist
+		   
+		   default: // > 64 bytes
+			   return t.total, false
+	   }
+   }
+   
+   // AddUnsorted adds this key to the end of the index for later building with Build.
+   func (t *KeyBytesFast) AddUnsorted(thekey []byte) error {
+	   switch (len(thekey) - 1) / 8 {
+		   case 0:
+			   a, i := bytes2uint64(thekey)
+			   hash = ((hash ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit8[i] = append(t.limit8[i], a)
+			   t.order8[i] = append(t.order8[i], t.total)
+			   t.count[i + 1]++
+			   t.total++
+			   return nil
+		   case 1:
+			   a, _ := bytes2uint64(thekey)
+			   b, i := bytes2uint64(thekey[8:])
+			   hash = (((hash ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit16[i] = append(t.limit16[i], [2]uint64{a, b})
+			   t.order16[i] = append(t.order16[i], t.total)
+			   t.count[i + 9]++
+			   t.total++
+			   return nil
+		   case 2:
+			   
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, i := bytes2uint64(thekey[16:])
+			   hash = ((((hash ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit24[i] = append(t.limit24[i], [3]uint64{a, b, c})
+			   t.order24[i] = append(t.order24[i], t.total)
+			   t.count[i + 17]++
+			   t.total++
+			   return nil
+		   case 3:
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, i := bytes2uint64(thekey[24:])
+			   hash = (((((hash ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit32[i] = append(t.limit32[i], [4]uint64{a, b, c, d})
+			   t.order32[i] = append(t.order32[i], t.total)
+			   t.count[i + 25]++
+			   t.total++
+			   return nil
+		   case 4:
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, i := bytes2uint64(thekey[32:])
+			   hash = ((((((hash ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit40[i] = append(t.limit40[i], [5]uint64{a, b, c, d, e})
+			   t.order40[i] = append(t.order40[i], t.total)
+			   t.count[i + 33]++
+			   t.total++
+			   return nil
+		   case 5:
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, _ := bytes2uint64(thekey[32:])
+			   f, i := bytes2uint64(thekey[40:])
+			   hash = (((((((hash ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit48[i] = append(t.limit48[i], [6]uint64{a, b, c, d, e, f})
+			   t.order48[i] = append(t.order48[i], t.total)
+			   t.count[i + 41]++
+			   t.total++
+			   return nil
+		   case 6:
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, _ := bytes2uint64(thekey[32:])
+			   f, _ := bytes2uint64(thekey[40:])
+			   g, i := bytes2uint64(thekey[48:])
+			   hash = ((((((((hash ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit56[i] = append(t.limit56[i], [7]uint64{a, b, c, d, e, f, g})
+			   t.order56[i] = append(t.order56[i], t.total)
+			   t.count[i + 49]++
+			   t.total++
+			   return nil
+		   case 7:
+			   a, _ := bytes2uint64(thekey)
+			   b, _ := bytes2uint64(thekey[8:])
+			   c, _ := bytes2uint64(thekey[16:])
+			   d, _ := bytes2uint64(thekey[24:])
+			   e, _ := bytes2uint64(thekey[32:])
+			   f, _ := bytes2uint64(thekey[40:])
+			   g, _ := bytes2uint64(thekey[48:])
+			   h, i := bytes2uint64(thekey[56:])
+			   hash = (((((((((hash ^ h) * 1099511628211 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   t.limit64[i] = append(t.limit64[i], [8]uint64{a, b, c, d, e, f, g, h})
+			   t.order64[i] = append(t.order64[i], t.total)
+			   if i < 7 {
+				   t.count[i + 57]++
+			   }
+			   t.total++
+			   return nil
+		   default:
+			   return errors.New(`Maximum key length is 64 bytes`)
+	   }
+   }
+   
+   
+   // Build sorts the keys and returns an array telling you how to sort the values, you must do this yourself.
+   func (t *KeyBytesFast) Build() ([]int, error) {
+   
+	   var l, on, run int
+	   imap := make([]int, t.total)
+	   
+	   {
+	   var temp []sortIntUint64.KeyVal
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit8[run]); l > 0 {
+			   m := t.order8[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make([]sortIntUint64.KeyVal, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit8[run] {
+				   temp[z] = sortIntUint64.KeyVal{m[z], k}
+			   }
+			   t.order8[run] = nil
+			   sortIntUint64.Asc(temp)
+			   newkey := t.limit8[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit16.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit16[run]); l > 0 {
+			   m := t.order16[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit16.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit16[run] {
+				   temp[z] = sortLimit16.KeyVal{m[z], k}
+			   }
+			   t.order16[run] = nil
+			   sortLimit16.Asc(temp)
+			   newkey := t.limit16[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit24.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit24[run]); l > 0 {
+			   m := t.order24[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit24.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit24[run] {
+				   temp[z] = sortLimit24.KeyVal{m[z], k}
+			   }
+			   t.order24[run] = nil
+			   sortLimit24.Asc(temp)
+			   newkey := t.limit24[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit32.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit32[run]); l > 0 {
+			   m := t.order32[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit32.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit32[run] {
+				   temp[z] = sortLimit32.KeyVal{m[z], k}
+			   }
+			   t.order32[run] = nil
+			   sortLimit32.Asc(temp)
+			   newkey := t.limit32[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit40.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit40[run]); l > 0 {
+			   m := t.order40[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit40.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit40[run] {
+				   temp[z] = sortLimit40.KeyVal{m[z], k}
+			   }
+			   t.order40[run] = nil
+			   sortLimit40.Asc(temp)
+			   newkey := t.limit40[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit48.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit48[run]); l > 0 {
+			   m := t.order48[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit48.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit48[run] {
+				   temp[z] = sortLimit48.KeyVal{m[z], k}
+			   }
+			   t.order48[run] = nil
+			   sortLimit48.Asc(temp)
+			   newkey := t.limit48[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit56.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit56[run]); l > 0 {
+			   m := t.order56[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit56.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit56[run] {
+				   temp[z] = sortLimit56.KeyVal{m[z], k}
+			   }
+			   t.order56[run] = nil
+			   sortLimit56.Asc(temp)
+			   newkey := t.limit56[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   {
+	   var temp sortLimit64.Slice
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit64[run]); l > 0 {
+			   m := t.order64[run]
+			   if l != len(m) {
+				   return nil, errors.New(`Build can only be run once. After the first time use AddAt.`)
+			   }
+			   if cap(temp) < l {
+				   temp = make(sortLimit64.Slice, l)
+			   } else {
+				   temp = temp[0:l]
+			   }
+			   for z, k := range t.limit64[run] {
+				   temp[z] = sortLimit64.KeyVal{m[z], k}
+			   }
+			   t.order64[run] = nil
+			   sortLimit64.Asc(temp)
+			   newkey := t.limit64[run]
+			   for i, obj := range temp {
+				   imap[on] = obj.K
+				   on++
+				   newkey[i] = obj.V
+			   }
+		   }
+	   }
+	   }
+	   
+	   // Correct all the counts
+	   for run=2; run<64; run++ {
+		   t.count[run] += t.count[run-1]
+	   }
+	   
+	   return imap, nil
+   }
+   
+   func (t *KeyBytesFast) Optimize() {
+   
+	   var l, run int
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit8[run]); l > 0 {
+			   newkey := make([]uint64, l)
+			   copy(newkey, t.limit8[run])
+			   t.limit8[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit16[run]); l > 0 {
+			   newkey := make([][2]uint64, l)
+			   copy(newkey, t.limit16[run])
+			   t.limit16[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit24[run]); l > 0 {
+			   newkey := make([][3]uint64, l)
+			   copy(newkey, t.limit24[run])
+			   t.limit24[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit32[run]); l > 0 {
+			   newkey := make([][4]uint64, l)
+			   copy(newkey, t.limit32[run])
+			   t.limit32[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit40[run]); l > 0 {
+			   newkey := make([][5]uint64, l)
+			   copy(newkey, t.limit40[run])
+			   t.limit40[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit48[run]); l > 0 {
+			   newkey := make([][6]uint64, l)
+			   copy(newkey, t.limit48[run])
+			   t.limit48[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit56[run]); l > 0 {
+			   newkey := make([][7]uint64, l)
+			   copy(newkey, t.limit56[run])
+			   t.limit56[run] = newkey
+		   }
+	   }
+	   
+	   for run=0; run<8; run++ {
+		   if l = len(t.limit64[run]); l > 0 {
+			   newkey := make([][8]uint64, l)
+			   copy(newkey, t.limit64[run])
+			   t.limit64[run] = newkey
+		   }
+	   }
+   }
+   
+   // Reset() must be called before Next(). Returns whether there are any entries.
+   func (t *KeyBytesFast) Reset() bool {
+	   t.onlimit = 0
+	   t.on8 = 0
+	   t.oncursor = 0
+	   if len(t.limit8[0]) == 0 {
+		   if t.total == 0 {
+			   return false
+		   } else {
+			   t.forward(0)
+		   }
+	   }
+	   return true
+   }
+   
+   func (t *KeyBytesFast) forward(l int) bool {
+	   t.oncursor++
+	   for t.oncursor >= l {
+		   t.oncursor = 0
+		   if t.on8++; t.on8 == 8 {
+			   t.on8 = 0
+			   if t.onlimit++; t.onlimit == 8 {
+				   t.Reset()
+				   return true
+			   }
+		   }
+		   switch t.onlimit {
+			   case 0: l = len(t.limit8[t.on8])
+			   case 1: l = len(t.limit16[t.on8])
+			   case 2: l = len(t.limit24[t.on8])
+			   case 3: l = len(t.limit32[t.on8])
+			   case 4: l = len(t.limit40[t.on8])
+			   case 5: l = len(t.limit48[t.on8])
+			   case 6: l = len(t.limit56[t.on8])
+			   case 7: l = len(t.limit64[t.on8])
+		   }
+	   }
+	   return false
+   }
+   
+   func (t *KeyBytesFast) Next() ([]byte, bool) {
+	   switch t.onlimit {
+		   case 0:
+			   v := t.limit8[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit8[t.on8]))
+			   return reverse8(v), eof
+		   case 1:
+			   v := t.limit16[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit16[t.on8]))
+			   return reverse16(v), eof
+		   case 2:
+			   v := t.limit24[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit24[t.on8]))
+			   return reverse24(v), eof
+		   case 3:
+			   v := t.limit32[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit32[t.on8]))
+			   return reverse32(v), eof
+		   case 4:
+			   v := t.limit40[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit40[t.on8]))
+			   return reverse40(v), eof
+		   case 5:
+			   v := t.limit48[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit48[t.on8]))
+			   return reverse48(v), eof
+		   case 6:
+			   v := t.limit56[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit56[t.on8]))
+			   return reverse56(v), eof
+		   default:
+			   v := t.limit64[t.on8][t.oncursor]
+			   eof := t.forward(len(t.limit64[t.on8]))
+			   return reverse64(v), eof
+	   }
+   }
+   
+   func (t *KeyBytesFast) LongestLength() int { // the length of the longest key
+	   var run int
+	   for run=7; run>=0; run-- {
+		   if len(t.limit64[run]) > 0 {
+			   return 57 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit56[run]) > 0 {
+			   return 49 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit48[run]) > 0 {
+			   return 41 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit40[run]) > 0 {
+			   return 33 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit32[run]) > 0 {
+			   return 25 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit24[run]) > 0 {
+			   return 17 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit16[run]) > 0 {
+			   return 9 + run
+		   }
+	   }
+	   for run=7; run>=0; run-- {
+		   if len(t.limit8[run]) > 0 {
+			   return 1 + run
+		   }
+	   }
+	   return 0
+   }
+   
+   func (t *KeyBytesFast) Keys() [][]byte {
+   
+	   var on, run int
+	   keys := make([][]byte, t.total)
+	   
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit8[run] {
+			   keys[on] = reverse8(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit16[run] {
+			   keys[on] = reverse16(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit24[run] {
+			   keys[on] = reverse24(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit32[run] {
+			   keys[on] = reverse32(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit40[run] {
+			   keys[on] = reverse40(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit48[run] {
+			   keys[on] = reverse48(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit56[run] {
+			   keys[on] = reverse56(v)
+			   on++
+		   }
+	   }
+	   for run=0; run<8; run++ {
+		   for _, v := range t.limit64[run] {
+			   keys[on] = reverse64(v)
+			   on++
+		   }
+	   }
+	   
+	   return keys
+   }
+   
+   func (t *KeyBytesFast) Write(w custom.Interface) {
+	   var i, run int
+   
+	   // Write total
+	   w.WriteUint64Variable(uint64(t.total))
+	   
+	   // Write count
+	   for i=0; i<64; i++ {
+		   w.WriteUint64Variable(uint64(t.count[i]))
+	   }
+	   
+	   // Write t.limit8
+	   for run=0; run<8; run++ {
+		   tmp := t.limit8[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v)
+		   }
+	   }
+	   // Write t.limit16
+	   for run=0; run<8; run++ {
+		   tmp := t.limit16[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+		   }
+	   }
+	   // Write t.limit24
+	   for run=0; run<8; run++ {
+		   tmp := t.limit24[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+			   w.WriteUint64(v[2])
+		   }
+	   }
+	   // Write t.limit32
+	   for run=0; run<8; run++ {
+		   tmp := t.limit32[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+			   w.WriteUint64(v[2])
+			   w.WriteUint64(v[3])
+		   }
+	   }
+	   // Write t.limit40
+	   for run=0; run<8; run++ {
+		   tmp := t.limit40[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+			   w.WriteUint64(v[2])
+			   w.WriteUint64(v[3])
+			   w.WriteUint64(v[4])
+		   }
+	   }
+	   // Write t.limit48
+	   for run=0; run<8; run++ {
+		   tmp := t.limit48[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+			   w.WriteUint64(v[2])
+			   w.WriteUint64(v[3])
+			   w.WriteUint64(v[4])
+			   w.WriteUint64(v[5])
+		   }
+	   }
+	   // Write t.limit56
+	   for run=0; run<8; run++ {
+		   tmp := t.limit56[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+			   w.WriteUint64(v[2])
+			   w.WriteUint64(v[3])
+			   w.WriteUint64(v[4])
+			   w.WriteUint64(v[5])
+			   w.WriteUint64(v[6])
+		   }
+	   }
+	   // Write t.limit64
+	   for run=0; run<8; run++ {
+		   tmp := t.limit64[run]
+		   w.WriteUint64Variable(uint64(len(tmp)))
+		   for _, v := range tmp {
+			   w.WriteUint64(v[0])
+			   w.WriteUint64(v[1])
+			   w.WriteUint64(v[2])
+			   w.WriteUint64(v[3])
+			   w.WriteUint64(v[4])
+			   w.WriteUint64(v[5])
+			   w.WriteUint64(v[6])
+			   w.WriteUint64(v[7])
+		   }
+	   }
+	   
+   }
+   
+   func (t *KeyBytesFast) Read(r *custom.Reader) {
+	   var run int
+	   var i, l, a, b, c, d, e, f, g, h uint64
+   
+	   // Write total
+	   t.total = int(r.ReadUint64Variable())
+	   
+	   // Read count
+	   for i=0; i<64; i++ {
+		   t.count[i] = int(r.ReadUint64Variable())
+	   }
+	   
+	   // Read t.limit8
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([]uint64, l)
+		   for i=0; i<l; i++ {
+			   tmp[i] = r.ReadUint64()
+		   }
+		   t.limit8[run] = tmp
+	   }
+	   // Read t.limit16
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][2]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   tmp[i] = [2]uint64{a, b}
+		   }
+		   t.limit16[run] = tmp
+	   }
+	   // Read t.limit24
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][3]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   c = r.ReadUint64()
+			   tmp[i] = [3]uint64{a, b, c}
+		   }
+		   t.limit24[run] = tmp
+	   }
+	   // Read t.limit32
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][4]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   c = r.ReadUint64()
+			   d = r.ReadUint64()
+			   tmp[i] = [4]uint64{a, b, c, d}
+		   }
+		   t.limit32[run] = tmp
+	   }
+	   // Read t.limit40
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][5]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   c = r.ReadUint64()
+			   d = r.ReadUint64()
+			   e = r.ReadUint64()
+			   tmp[i] = [5]uint64{a, b, c, d, e}
+		   }
+		   t.limit40[run] = tmp
+	   }
+	   // Read t.limit48
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][6]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   c = r.ReadUint64()
+			   d = r.ReadUint64()
+			   e = r.ReadUint64()
+			   f = r.ReadUint64()
+			   tmp[i] = [6]uint64{a, b, c, d, e, f}
+		   }
+		   t.limit48[run] = tmp
+	   }
+	   // Read t.limit56
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][7]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   c = r.ReadUint64()
+			   d = r.ReadUint64()
+			   e = r.ReadUint64()
+			   f = r.ReadUint64()
+			   g = r.ReadUint64()
+			   tmp[i] = [7]uint64{a, b, c, d, e, f, g}
+		   }
+		   t.limit56[run] = tmp
+	   }
+	   // Read t.limit64
+	   for run=0; run<8; run++ {
+		   l = r.ReadUint64Variable()
+		   tmp := make([][8]uint64, l)
+		   for i=0; i<l; i++ {
+			   a = r.ReadUint64()
+			   b = r.ReadUint64()
+			   c = r.ReadUint64()
+			   d = r.ReadUint64()
+			   e = r.ReadUint64()
+			   f = r.ReadUint64()
+			   g = r.ReadUint64()
+			   h = r.ReadUint64()
+			   tmp[i] = [8]uint64{a, b, c, d, e, f, g, h}
+		   }
+		   t.limit64[run] = tmp
+	   }
+   }
+
 // ---------- KeyBytes ----------
 // Key bytes has around 5KB of memory overhead for the structures, beyond this it stores all keys as efficiently as possible.
 
