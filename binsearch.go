@@ -179,13 +179,12 @@ type KeyBytesFast struct {
 	   
 	   var at, min int
 	   var compare uint64
-	   var hash uint64 = 14695981039346656037
    
 	   switch (len(thekey) - 1) / 8 {
 	   
 		   case 0: // 0 - 8 bytes
 			   a, l := bytes2uint64(thekey)
-			   hash = ((hash ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = ((14695981039346656037 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -208,7 +207,7 @@ type KeyBytesFast struct {
 		   case 1: // 9 - 16 bytes
 			   a, _ := bytes2uint64(thekey)
 			   b, l := bytes2uint64(thekey[8:])
-			   hash = (((hash ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = (((14695981039346656037 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -240,7 +239,7 @@ type KeyBytesFast struct {
 			   a, _ := bytes2uint64(thekey)
 			   b, _ := bytes2uint64(thekey[8:])
 			   c, l := bytes2uint64(thekey[16:])
-			   hash = ((((hash ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = ((((14695981039346656037 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -281,7 +280,7 @@ type KeyBytesFast struct {
 			   b, _ := bytes2uint64(thekey[8:])
 			   c, _ := bytes2uint64(thekey[16:])
 			   d, l := bytes2uint64(thekey[24:])
-			   hash = (((((hash ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = (((((14695981039346656037 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -331,7 +330,7 @@ type KeyBytesFast struct {
 			   c, _ := bytes2uint64(thekey[16:])
 			   d, _ := bytes2uint64(thekey[24:])
 			   e, l := bytes2uint64(thekey[32:])
-			   hash = ((((((hash ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = ((((((14695981039346656037 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -390,7 +389,7 @@ type KeyBytesFast struct {
 			   d, _ := bytes2uint64(thekey[24:])
 			   e, _ := bytes2uint64(thekey[32:])
 			   f, l := bytes2uint64(thekey[40:])
-			   hash = (((((((hash ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = (((((((14695981039346656037 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -458,7 +457,7 @@ type KeyBytesFast struct {
 			   e, _ := bytes2uint64(thekey[32:])
 			   f, _ := bytes2uint64(thekey[40:])
 			   g, l := bytes2uint64(thekey[48:])
-			   hash = ((((((((hash ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = ((((((((14695981039346656037 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -535,7 +534,7 @@ type KeyBytesFast struct {
 			   f, _ := bytes2uint64(thekey[40:])
 			   g, _ := bytes2uint64(thekey[48:])
 			   h, l := bytes2uint64(thekey[56:])
-			   hash = (((((((((hash ^ h) * 1099511628211 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   var hash uint64 = (((((((((14695981039346656037 ^ h) * 1099511628211 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
 			   if (t.hashmap[hash >> 3] & (1 << (hash & 0x07))) == 0 {
 				   return 0, false
 			   }
@@ -621,8 +620,8 @@ type KeyBytesFast struct {
 	   switch (len(thekey) - 1) / 8 {
 		   case 0:
 			   a, i := bytes2uint64(thekey)
-			   hash = ((hash ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = ((14695981039346656037 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit8[i] = append(t.limit8[i], a)
 			   t.order8[i] = append(t.order8[i], t.total)
 			   t.count[i + 1]++
@@ -631,8 +630,8 @@ type KeyBytesFast struct {
 		   case 1:
 			   a, _ := bytes2uint64(thekey)
 			   b, i := bytes2uint64(thekey[8:])
-			   hash = (((hash ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = (((14695981039346656037 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit16[i] = append(t.limit16[i], [2]uint64{a, b})
 			   t.order16[i] = append(t.order16[i], t.total)
 			   t.count[i + 9]++
@@ -643,8 +642,8 @@ type KeyBytesFast struct {
 			   a, _ := bytes2uint64(thekey)
 			   b, _ := bytes2uint64(thekey[8:])
 			   c, i := bytes2uint64(thekey[16:])
-			   hash = ((((hash ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = ((((14695981039346656037 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit24[i] = append(t.limit24[i], [3]uint64{a, b, c})
 			   t.order24[i] = append(t.order24[i], t.total)
 			   t.count[i + 17]++
@@ -655,8 +654,8 @@ type KeyBytesFast struct {
 			   b, _ := bytes2uint64(thekey[8:])
 			   c, _ := bytes2uint64(thekey[16:])
 			   d, i := bytes2uint64(thekey[24:])
-			   hash = (((((hash ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = (((((14695981039346656037 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit32[i] = append(t.limit32[i], [4]uint64{a, b, c, d})
 			   t.order32[i] = append(t.order32[i], t.total)
 			   t.count[i + 25]++
@@ -668,8 +667,8 @@ type KeyBytesFast struct {
 			   c, _ := bytes2uint64(thekey[16:])
 			   d, _ := bytes2uint64(thekey[24:])
 			   e, i := bytes2uint64(thekey[32:])
-			   hash = ((((((hash ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = ((((((14695981039346656037 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit40[i] = append(t.limit40[i], [5]uint64{a, b, c, d, e})
 			   t.order40[i] = append(t.order40[i], t.total)
 			   t.count[i + 33]++
@@ -682,8 +681,8 @@ type KeyBytesFast struct {
 			   d, _ := bytes2uint64(thekey[24:])
 			   e, _ := bytes2uint64(thekey[32:])
 			   f, i := bytes2uint64(thekey[40:])
-			   hash = (((((((hash ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = (((((((14695981039346656037 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit48[i] = append(t.limit48[i], [6]uint64{a, b, c, d, e, f})
 			   t.order48[i] = append(t.order48[i], t.total)
 			   t.count[i + 41]++
@@ -697,8 +696,8 @@ type KeyBytesFast struct {
 			   e, _ := bytes2uint64(thekey[32:])
 			   f, _ := bytes2uint64(thekey[40:])
 			   g, i := bytes2uint64(thekey[48:])
-			   hash = ((((((((hash ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = ((((((((14695981039346656037 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit56[i] = append(t.limit56[i], [7]uint64{a, b, c, d, e, f, g})
 			   t.order56[i] = append(t.order56[i], t.total)
 			   t.count[i + 49]++
@@ -713,8 +712,8 @@ type KeyBytesFast struct {
 			   f, _ := bytes2uint64(thekey[40:])
 			   g, _ := bytes2uint64(thekey[48:])
 			   h, i := bytes2uint64(thekey[56:])
-			   hash = (((((((((hash ^ h) * 1099511628211 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
-			   t.hashmap[i>>3] |= 1 << (i & 0x07)
+			   var hash uint64 = (((((((((14695981039346656037 ^ h) * 1099511628211 ^ g) * 1099511628211 ^ f) * 1099511628211 ^ e) * 1099511628211 ^ d) * 1099511628211 ^ c) * 1099511628211 ^ b) * 1099511628211 ^ a) * 1099511628211) & 0x0FFFFFFF
+			   t.hashmap[hash>>3] |= 1 << (hash & 0x07)
 			   t.limit64[i] = append(t.limit64[i], [8]uint64{a, b, c, d, e, f, g, h})
 			   t.order64[i] = append(t.order64[i], t.total)
 			   if i < 7 {
